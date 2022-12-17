@@ -23,10 +23,6 @@ for (k in 1:500) {
   X <- matrix(0, nrow=n, ncol = 9)
   a <- c(1, 4, 7)
   b <- c(2,3,5,6,8,9)
-  #  ber <- rbinom(rep(1, 1500), rep(1, 1500), prob = rep(0.05, 1500))
-  #  X[,1] <- ber[1:500]*rmvc(500, mu=rep(0,1), S=1) + (1-ber[1:500])*rmvnorm(500, mean = rep(0,1), sigma = diag(1))
-  #  X[,4] <- ber[501:1000]*rmvc(500, mu=rep(0,1), S=1) + (1-ber[501:1000])*rmvnorm(500, mean = rep(0,1), sigma = diag(1))
-  #  X[,7] <- ber[1001:1500]*rmvc(500, mu=rep(0,1), S=1) + (1-ber[1001:1500])*rmvnorm(500, mean = rep(0,1), sigma = diag(1))
   X[,a] <- rmvnorm(n, mean = rep(0,3), sigma = diag(3))
   X[,b] <- rmvnorm(n, mean = rep(0,6), sigma = diag(6))
   X_list <- list(X[,1:3], X[, 4:6], X[, 7:9])
@@ -68,10 +64,6 @@ for (k in 1:500) {
   X <- matrix(0, nrow=500, ncol = 9)
   a <- c(1, 4, 7)
   b <- c(2,3,5,6,8,9)
-  #  ber <- rbinom(rep(1, 1500), rep(1, 1500), prob = rep(0.05, 1500))
-  #  X[,1] <- ber[1:500]*rmvc(500, mu=rep(0,1), S=1) + (1-ber[1:500])*rmvnorm(500, mean = rep(0,1), sigma = diag(1))
-  #  X[,4] <- ber[501:1000]*rmvc(500, mu=rep(0,1), S=1) + (1-ber[501:1000])*rmvnorm(500, mean = rep(0,1), sigma = diag(1))
-  #  X[,7] <- ber[1001:1500]*rmvc(500, mu=rep(0,1), S=1) + (1-ber[1001:1500])*rmvnorm(500, mean = rep(0,1), sigma = diag(1))
   X[,a] <- (rmvnorm(500, mean = rep(0,3), sigma = diag(3)))**3
   X[,b] <- (rmvnorm(500, mean = rep(0,6), sigma = diag(6)))**3
   X_list <- list(X[,1:3], X[, 4:6], X[, 7:9])
@@ -115,7 +107,6 @@ type1_matteson_C <- rep(0, 500)
 type1_dhsic_C <- rep(0, 500)
 for (k in 1:500) {
   X <- matrix(rcauchy(9*500, 0, 1), nrow=n, ncol=9)
-  #  X[,b] <- rmvnorm(500, mean = rep(0,6), sigma = diag(6))
   X_list <- list(X[,1:3], X[, 4:6], X[, 7:9])
   
   # RJdCov
@@ -446,7 +437,7 @@ write.csv(s2_power, "C:/Users/ziangniu/Desktop/Simulation/result/s2_power.csv")
 ## test the pairwise independence
 n <- 500
 set.seed(1)
-emprical <- gensamdistrhodcov(500, dim_list = rep(3, 2), niter=1000)
+emprical <- gensamdistrpwdcov(500, dim_list = rep(3, 3), niter=1000)
 power_rdhdcov_Ghod <- rep(0, 500)
 power_hdcov_Ghod <- rep(0, 500)
 for (k in 1:500) {
@@ -459,16 +450,15 @@ for (k in 1:500) {
   neg_index <- which(sign_list>0)
   X[, 7][plus_index] <- -X[, 7][plus_index]
   X[, 7][neg_index] <- X[, 7][neg_index]
-  X_list <- list(X[,4:6], X[, 7:9])
+  X_list <- list(X[,1:3], X[,4:6], X[, 7:9])
   
   ## rdhod
-  statis <- computestatisticjdcov(X[,4:9], dim_list = rep(3, 2))
+  statis <- computestatisticpwrdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_Ghod[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
   ## jdhod
-  statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
-  power_hdcov_Ghod[k] <- statis$p.value
-  
+  statis <- boot_pwdcov(X = X_list, B = 500, dim_list = rep(3, 3))
+  power_hdcov_Ghod[k] <- statis
   
   print(power_rdhdcov_Ghod[k])
   print(power_hdcov_Ghod[k])
@@ -477,7 +467,7 @@ for (k in 1:500) {
 
 mix_2_power <- data.frame(rdhdcov = power_rdhdcov_Ghod, hdcov = power_hdcov_Ghod)
 
-write.csv(mix_2_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_2_power.csv")
+write.csv(mix_2_power, "mix_2_power.csv")
 
 
 ## test the third order dependence
@@ -540,6 +530,7 @@ for (k in 1:500) {
   statis <- computestatisticjdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_P[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
 
+  ## jdhod
   statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
   power_hdcov_P[k] <- statis$p.value
   
@@ -559,7 +550,7 @@ write.csv(mix_P_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_P_power.
 ## test the pairwise independence
 n <- 500
 set.seed(1)
-emprical <- gensamdistrhodcov(500, dim_list = rep(3, 2), niter=1000)
+emprical <- gensamdistrpwdcov(500, dim_list = rep(3, 3), niter=1000)
 power_rdhdcov_Ghod <- rep(0, 500)
 power_hdcov_Ghod <- rep(0, 500)
 for (k in 1:500) {
@@ -572,16 +563,15 @@ for (k in 1:500) {
   neg_index <- which(sign_list>0)
   X[, 7][plus_index] <- -X[, 7][plus_index]
   X[, 7][neg_index] <- X[, 7][neg_index]
-  X_list <- list(X[,4:6], X[, 7:9])
+  X_list <- list(X[,1:3], X[,4:6], X[, 7:9])
   
   ## rdhod
-  statis <- computestatisticjdcov(X[,4:9], dim_list = rep(3, 2))
+  statis <- computestatisticpwrdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_Ghod[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
   ## jdhod
-  statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
-  power_hdcov_Ghod[k] <- statis$p.value
-  
+  statis <- boot_pwdcov(X = X_list, B = 500, dim_list = rep(3, 3))
+  power_hdcov_Ghod[k] <- statis
   
   print(power_rdhdcov_Ghod[k])
   print(power_hdcov_Ghod[k])
@@ -590,7 +580,7 @@ for (k in 1:500) {
 
 mix_2_power <- data.frame(rdhdcov = power_rdhdcov_Ghod, hdcov = power_hdcov_Ghod)
 
-write.csv(mix_2_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_G2_power.csv")
+write.csv(mix_2_power, "mix_G2_power.csv")
 
 
 ## test the third order dependence
@@ -653,6 +643,7 @@ for (k in 1:500) {
   statis <- computestatisticjdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_P[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
+  ## jdhod
   statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
   power_hdcov_P[k] <- statis$p.value
   
@@ -672,7 +663,7 @@ write.csv(mix_P_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_GP_power
 ## test the pairwise independence
 n <- 500
 set.seed(1)
-emprical <- gensamdistrhodcov(500, dim_list = rep(3, 2), niter=1000)
+emprical <- gensamdistrpwdcov(500, dim_list = rep(3, 3), niter=1000)
 power_rdhdcov_Ghod <- rep(0, 500)
 power_hdcov_Ghod <- rep(0, 500)
 for (k in 1:500) {
@@ -685,15 +676,15 @@ for (k in 1:500) {
   neg_index <- which(sign_list>0)
   X[, 7][plus_index] <- -X[, 7][plus_index]
   X[, 7][neg_index] <- X[, 7][neg_index]
-  X_list <- list(X[,4:6], X[, 7:9])
+  X_list <- list(X[,1:3], X[,4:6], X[, 7:9])
   
   ## rdhod
-  statis <- computestatisticjdcov(X[,4:9], dim_list = rep(3, 2))
+  statis <- computestatisticpwrdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_Ghod[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
   ## jdhod
-  statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
-  power_hdcov_Ghod[k] <- statis$p.value
+  statis <- boot_pwdcov(X = X_list, B = 500, dim_list = rep(3, 3))
+  power_hdcov_Ghod[k] <- statis
   
   
   print(power_rdhdcov_Ghod[k])
@@ -703,7 +694,7 @@ for (k in 1:500) {
 
 mix_2_power <- data.frame(rdhdcov = power_rdhdcov_Ghod, hdcov = power_hdcov_Ghod)
 
-write.csv(mix_2_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_T2_power.csv")
+write.csv(mix_2_power, "mix_T2_power.csv")
 
 
 ## test the third order dependence
@@ -766,6 +757,7 @@ for (k in 1:500) {
   statis <- computestatisticjdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_P[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
+  ## jdhod
   statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
   power_hdcov_P[k] <- statis$p.value
   
@@ -786,7 +778,7 @@ write.csv(mix_P_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_TP_power
 ## test the pairwise independence
 n <- 500
 set.seed(1)
-emprical <- gensamdistrhodcov(500, dim_list = rep(3, 2), niter=1000)
+emprical <- gensamdistrpwdcov(500, dim_list = rep(3, 3), niter=1000)
 power_rdhdcov_Ghod <- rep(0, 500)
 power_hdcov_Ghod <- rep(0, 500)
 for (k in 1:500) {
@@ -799,15 +791,15 @@ for (k in 1:500) {
   neg_index <- which(sign_list>0)
   X[, 7][plus_index] <- -X[, 7][plus_index]
   X[, 7][neg_index] <- X[, 7][neg_index]
-  X_list <- list(X[,4:6], X[, 7:9])
+  X_list <- list(X[,1:3], X[,4:6], X[, 7:9])
   
   ## rdhod
-  statis <- computestatisticjdcov(X[,4:9], dim_list = rep(3, 2))
+  statis <- computestatisticpwrdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_Ghod[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
   ## jdhod
-  statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
-  power_hdcov_Ghod[k] <- statis$p.value
+  statis <- boot_pwdcov(X = X_list, B = 500, dim_list = rep(3, 3))
+  power_hdcov_Ghod[k] <- statis
   
   
   print(power_rdhdcov_Ghod[k])
@@ -817,7 +809,7 @@ for (k in 1:500) {
 
 mix_2_power <- data.frame(rdhdcov = power_rdhdcov_Ghod, hdcov = power_hdcov_Ghod)
 
-write.csv(mix_2_power, "C:/Users/ziangniu/Desktop/Simulation/result/mix_TT2_power.csv")
+write.csv(mix_2_power, "mix_TT2_power.csv")
 
 
 ## test the third order dependence
@@ -880,6 +872,7 @@ for (k in 1:500) {
   statis <- computestatisticjdcov(X, dim_list = rep(3, 3))
   power_rdhdcov_P[k] <- length(which(emprical >= statis)) / (length(emprical) + 1)
   
+  ## jdhod
   statis <- jdcov.test(X_list, stat.type = "V", alpha = 0.05)
   power_hdcov_P[k] <- statis$p.value
   
